@@ -1,0 +1,29 @@
+name: Daily HR Email Agent
+
+on:
+  schedule:
+    # Ye roz subah 10:00 AM IST (04:30 AM UTC) chalega
+    - cron: '30 4 * * *'
+  workflow_dispatch: # Isse tum GitHub UI se jab chaho manual chala sakte ho
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Agent
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+        run: node index.js

@@ -1,26 +1,6 @@
-// 🚨 MAGIC FIX: Force Node.js to use IPv4 everywhere (MUST be line 1)
-require('dns').setDefaultResultOrder('ipv4first');
-
 require('dotenv').config();
-const express = require('express');
-const cron = require('node-cron');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Render Web Service ko zinda rakhne ke liye ek simple route
-app.get('/', (req, res) => {
-    res.send('🚀 Job Agent is running 24/7 on Cloud!');
-});
-
-// Manual Trigger Route
-app.get('/send-now', (req, res) => {
-    console.log('🚀 Manual trigger hit by Admin! Starting agent instantly...');
-    startAgent(); 
-    res.send('<h3>✅ Email agent manually started! Check Render logs.</h3>');
-});
 
 // 1. Mongoose Schema
 const hrSchema = new mongoose.Schema({
@@ -31,19 +11,12 @@ const hrSchema = new mongoose.Schema({
 });
 const HR = mongoose.model('HR_List', hrSchema, 'HR_List'); 
 
-// 2. Nodemailer Setup (Cloud Optimized & IPv4 Forced)
+// 2. Nodemailer Setup
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, 
+    service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    },
-    family: 4, // 🚨 Double protection for IPv4
-    connectionTimeout: 10000, 
-    tls: {
-        rejectUnauthorized: false 
     }
 });
 
@@ -52,6 +25,9 @@ const getRandomDelay = (min, max) => Math.floor(Math.random() * (max - min + 1) 
 
 async function startAgent() {
     try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log('✅ Connected to MongoDB Atlas!');
+        
         console.log('\n🔍 Starting Daily Email Batch...');
         
         const pendingHRs = await HR.find({ status: 'Pending' }).limit(200);
@@ -59,7 +35,7 @@ async function startAgent() {
 
         if (pendingHRs.length === 0) {
             console.log('🎉 No pending emails left. Database is exhausted!');
-            return; 
+            process.exit(0);
         }
 
         for (let i = 0; i < pendingHRs.length; i++) {
@@ -74,7 +50,7 @@ async function startAgent() {
                     html: `
                         <p>Hi ${firstName},</p>
                         <p>I’m reaching out to explore potential engineering opportunities at <b>${hr.companyName}</b>.</p>
-                        <p>I’m a Full Stack Developer with hands-on experience across backend, frontend, and system optimization. I’ve built scalable REST APIs, implemented secure authentication systems with role-based access control and robust validation, developed responsive React interfaces, and worked on real-time systems .</p>
+                        <p>I’m a Full Stack Developer with hands-on experience across backend, frontend, and system optimization. I’ve built scalable REST APIs, implemented secure authentication systems with role-based access control and robust validation, developed responsive React interfaces, and worked on real-time systems.</p>
                         <p>Beyond development, I focus on clean architecture, debugging, performance optimization, and writing maintainable production-ready code.</p>
                         <p>You can review my work here:<br>
                          <b>Portfolio:</b> <a href="https://portfolio-jitendrasharma.onrender.com/">View Portfolio</a><br>
@@ -109,27 +85,13 @@ async function startAgent() {
                 await delay(waitTime); 
             }
         }
-        console.log('\n🎉 Today\'s batch complete! Waiting for tomorrow.');
+        console.log('\n🎉 Today\'s batch complete!');
+        process.exit(0);
 
     } catch (error) {
         console.error('❌ System Error:', error);
+        process.exit(1);
     }
 }
 
-// 3. Database Connect aur Server Start
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('✅ Connected to MongoDB Atlas!');
-        
-        app.listen(PORT, () => {
-            console.log(`🌐 Web server listening on port ${PORT}`);
-            
-            cron.schedule('30 4 * * *', () => {
-                console.log('⏰ Cron timer triggered! Waking up agent...');
-                startAgent();
-            });
-
-            console.log('⏳ Cron job scheduled for 10:00 AM IST everyday.');
-        });
-    })
-    .catch(err => console.error('Database connection failed:', err));
+startAgent();
