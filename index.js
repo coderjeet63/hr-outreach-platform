@@ -30,18 +30,19 @@ const hrSchema = new mongoose.Schema({
 const HR = mongoose.model('HR_List', hrSchema, 'HR_List'); 
 
 
-// 2. Nodemailer Setup (Cloud Optimized for Render)
+// 2. Nodemailer Setup (Cloud Optimized & IPv4 Forced)
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
-    secure: true, // true for 465, false for other ports
+    secure: true, 
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    connectionTimeout: 10000, // 10 seconds timeout
+    family: 4, // 🚨 SABSE IMPORTANT: Force IPv4 instead of IPv6
+    connectionTimeout: 10000, 
     tls: {
-        rejectUnauthorized: false // Cloud se connect karte waqt SSL issues fix karne ke liye
+        rejectUnauthorized: false 
     }
 });
 
