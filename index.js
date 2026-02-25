@@ -12,6 +12,13 @@ app.get('/', (req, res) => {
     res.send('🚀 Job Agent is running 24/7 on Cloud!');
 });
 
+// Manual Trigger Route
+app.get('/send-now', (req, res) => {
+    console.log('🚀 Manual trigger hit by Admin! Starting agent instantly...');
+    startAgent(); // Ye function call hote hi mails jana shuru ho jayengi
+    res.send('<h3>✅ Email agent manually started! Check Render logs.</h3>');
+});
+
 // 1. Mongoose Schema
 const hrSchema = new mongoose.Schema({
     hrName: String,
