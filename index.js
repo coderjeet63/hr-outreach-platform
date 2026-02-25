@@ -29,12 +29,19 @@ const hrSchema = new mongoose.Schema({
 // Dhyan do: Yahan apna exact collection name likhna jo Compass mein hai (jaise 'HR_List')
 const HR = mongoose.model('HR_List', hrSchema, 'HR_List'); 
 
-// 2. Nodemailer Setup
+
+// 2. Nodemailer Setup (Cloud Optimized for Render)
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true for 465, false for other ports
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
+    },
+    connectionTimeout: 10000, // 10 seconds timeout
+    tls: {
+        rejectUnauthorized: false // Cloud se connect karte waqt SSL issues fix karne ke liye
     }
 });
 
