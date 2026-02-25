@@ -1,3 +1,6 @@
+// 🚨 MAGIC FIX: Force Node.js to use IPv4 everywhere (MUST be line 1)
+require('dns').setDefaultResultOrder('ipv4first');
+
 require('dotenv').config();
 const express = require('express');
 const cron = require('node-cron');
@@ -15,7 +18,7 @@ app.get('/', (req, res) => {
 // Manual Trigger Route
 app.get('/send-now', (req, res) => {
     console.log('🚀 Manual trigger hit by Admin! Starting agent instantly...');
-    startAgent(); // Ye function call hote hi mails jana shuru ho jayengi
+    startAgent(); 
     res.send('<h3>✅ Email agent manually started! Check Render logs.</h3>');
 });
 
@@ -26,9 +29,7 @@ const hrSchema = new mongoose.Schema({
     email: String,
     status: { type: String, default: 'Pending' }
 });
-// Dhyan do: Yahan apna exact collection name likhna jo Compass mein hai (jaise 'HR_List')
 const HR = mongoose.model('HR_List', hrSchema, 'HR_List'); 
-
 
 // 2. Nodemailer Setup (Cloud Optimized & IPv4 Forced)
 const transporter = nodemailer.createTransport({
@@ -39,7 +40,7 @@ const transporter = nodemailer.createTransport({
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    family: 4, // 🚨 SABSE IMPORTANT: Force IPv4 instead of IPv6
+    family: 4, // 🚨 Double protection for IPv4
     connectionTimeout: 10000, 
     tls: {
         rejectUnauthorized: false 
@@ -58,7 +59,7 @@ async function startAgent() {
 
         if (pendingHRs.length === 0) {
             console.log('🎉 No pending emails left. Database is exhausted!');
-            return; // Yahan server band nahi hoga, bas function ruk jayega
+            return; 
         }
 
         for (let i = 0; i < pendingHRs.length; i++) {
@@ -120,12 +121,9 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('✅ Connected to MongoDB Atlas!');
         
-        // Express server chalu karo
         app.listen(PORT, () => {
             console.log(`🌐 Web server listening on port ${PORT}`);
             
-            // CRON JOB SETUP: Roz subah 10:00 AM IST (Indian Time) chalega
-            // Server UTC time pe chalta hai, isliye 4:30 AM UTC = 10:00 AM IST
             cron.schedule('30 4 * * *', () => {
                 console.log('⏰ Cron timer triggered! Waking up agent...');
                 startAgent();
