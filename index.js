@@ -1,6 +1,13 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
+const express = require('express');
+
+// 0. Dummy Express Server for Render Port Binding
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('Email Agent is running!'));
+app.listen(PORT, () => console.log(`🌐 Dummy Web Server listening on port ${PORT}`));
 
 // 1. Mongoose Schema
 const companySchema = new mongoose.Schema({
@@ -17,7 +24,9 @@ const Company = mongoose.model('Company', companySchema, 'companies');
 
 // 2. Nodemailer Setup
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
