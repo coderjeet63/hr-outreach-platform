@@ -65,7 +65,7 @@ async function startAgent() {
                     to: company.email,
                     subject: `Application for Software Engineer – Jitendra Sharma`,
                     html: `
-                        <p>Dear Hiring Team,</p>
+                        <p>Dear Sir/Ma'am,</p>
                         <p>I am writing to express my interest in software engineering opportunities at your company.</p>
                         <p>As a developer with a strong focus on clean architecture and system optimization, I specialize in building scalable, production-ready systems. During my recent industry experience, I have architected and implemented advanced backend solutions utilizing real-time communication (Socket.io/WebRTC), high-performance caching (Redis), and secure RESTful APIs.</p>
                         <p>On the frontend, I build complex, responsive user interfaces using React.js, Redux Toolkit, and Tailwind CSS. I am highly focused on Data Structures & Algorithms and writing maintainable code that handles real-world demands—skills I've recently applied to build real-time collaborative platforms and point-of-sale integrations.</p>
