@@ -79,8 +79,8 @@ async function startAgent() {
                     `,
                     attachments: [
                         {
-                            filename: 'Jitendra_Sharma_Resume.pdf',
-                            path: './Jitendra_Sharma_Resume.pdf'
+                            filename: 'JITENDRA_SHARMA_RESUME.pdf',
+                            path: './JITENDRA_SHARMA_RESUME.pdf'
                         }
                     ]
                 };
