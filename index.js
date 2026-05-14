@@ -3,13 +3,17 @@ const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 
 // 1. Mongoose Schema
-const hrSchema = new mongoose.Schema({
-    hrName: String,
+const companySchema = new mongoose.Schema({
     companyName: String,
+    location: String,
+    website: String,
     email: String,
-    status: { type: String, default: 'Pending' }
+    specialization: String,
+    emailStatus: { type: String, default: 'Pending' },
+    lastEmailSentAt: Date
 });
-const HR = mongoose.model('HR_List', hrSchema, 'HR_List'); 
+// Using 'companies' as the collection name where you import your CSV
+const Company = mongoose.model('Company', companySchema, 'companies');
 
 // 2. Nodemailer Setup
 const transporter = nodemailer.createTransport({
@@ -27,37 +31,42 @@ async function startAgent() {
     try {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Connected to MongoDB Atlas!');
-        
-        console.log('\n🔍 Starting Daily Email Batch...');
-        
-        const pendingHRs = await HR.find({ status: 'Pending' }).limit(200);
-        console.log(`📌 Found ${pendingHRs.length} pending emails.`);
 
-        if (pendingHRs.length === 0) {
+        console.log('\n🔍 Starting Daily Email Batch...');
+
+        // Find companies with 'Pending' status AND ensure they have a valid email
+        const pendingCompanies = await Company.find({
+            emailStatus: 'Pending',
+            email: { $exists: true, $ne: '' }
+        }).limit(200);
+
+        console.log(`📌 Found ${pendingCompanies.length} pending emails.`);
+
+        if (pendingCompanies.length === 0) {
             console.log('🎉 No pending emails left. Database is exhausted!');
             process.exit(0);
         }
 
-        for (let i = 0; i < pendingHRs.length; i++) {
-            const hr = pendingHRs[i];
-            const firstName = hr.hrName ? hr.hrName.split(' ')[0] : 'Hiring Team';
+        for (let i = 0; i < pendingCompanies.length; i++) {
+            const company = pendingCompanies[i];
 
             try {
                 const mailOptions = {
                     from: process.env.EMAIL_USER,
-                    to: hr.email,
-                    subject: `Application for Full Stack Developer - Jitendra Sharma`,
+                    to: company.email,
+                    subject: `Application for Software Engineer – Jitendra Sharma`,
                     html: `
-                        <p>Hi ${firstName},</p>
-                        <p>I’m reaching out to explore potential engineering opportunities at <b>${hr.companyName}</b>.</p>
-                        <p>I’m a Full Stack Developer with hands-on experience across backend, frontend, and system optimization. I’ve built scalable REST APIs, implemented secure authentication systems with role-based access control and robust validation, developed responsive React interfaces, and worked on real-time systems.</p>
-                        <p>Beyond development, I focus on clean architecture, debugging, performance optimization, and writing maintainable production-ready code.</p>
-                        <p>You can review my work here:<br>
-                         <b>Portfolio:</b> <a href="https://portfolio-jitendrasharma.onrender.com/">View Portfolio</a><br>
-                         <b>GitHub:</b> <a href="https://github.com/coderjeet63">coderjeet63</a><br>
-                         <b>LinkedIn:</b> <a href="https://www.linkedin.com/in/jitendra-sharma-553136284/">View LinkedIn Profile</a></p>
-                        <p>I’ve attached my resume for your consideration and would welcome the opportunity to contribute to your team.</p>
-                        <p>Best regards,<br><b>Jitendra Sharma</b></p>
+                        <p>Dear Hiring Team,</p>
+                        <p>I am writing to express my interest in software engineering opportunities at your company.</p>
+                        <p>As a developer with a strong focus on clean architecture and system optimization, I specialize in building scalable, production-ready systems. During my recent industry experience, I have architected and implemented advanced backend solutions utilizing real-time communication (Socket.io/WebRTC), high-performance caching (Redis), and secure RESTful APIs.</p>
+                        <p>On the frontend, I build complex, responsive user interfaces using React.js, Redux Toolkit, and Tailwind CSS. I am highly focused on Data Structures & Algorithms and writing maintainable code that handles real-world demands—skills I've recently applied to build real-time collaborative platforms and point-of-sale integrations.</p>
+                        <p>I have attached my resume for your review and included links to my work below. I am confident my technical background aligns well with your team's needs and would welcome the opportunity to discuss this further.</p>
+                        <p>Best regards,<br>
+                        Jitendra Sharma<br>
+                        <b>Portfolio:</b> <a href="https://portfolio-jitendrasharma.onrender.com/">View Portfolio</a><br>
+                        <b>GitHub:</b> <a href="https://github.com/coderjeet63">coderjeet63</a><br>
+                        <b>LinkedIn:</b> <a href="https://www.linkedin.com/in/jitendra-sharma-553136284/">View LinkedIn Profile</a><br>
+                        <b>Phone:</b> +91-6395905793</p>
                     `,
                     attachments: [
                         {
@@ -68,21 +77,22 @@ async function startAgent() {
                 };
 
                 await transporter.sendMail(mailOptions);
-                console.log(`✅ Success: ${hr.email}`);
+                console.log(`✅ Success: ${company.email}`);
 
-                hr.status = 'Sent';
-                await hr.save();
+                company.emailStatus = 'Sent';
+                company.lastEmailSentAt = new Date();
+                await company.save();
 
             } catch (sendError) {
-                console.error(`❌ Failed: ${hr.email} | Reason: ${sendError.message}`);
-                hr.status = 'Failed';
-                await hr.save();
+                console.error(`❌ Failed: ${company.email} | Reason: ${sendError.message}`);
+                company.emailStatus = 'Failed';
+                await company.save();
             }
 
-            if (i < pendingHRs.length - 1) {
-                const waitTime = getRandomDelay(120000, 180000); 
+            if (i < pendingCompanies.length - 1) {
+                const waitTime = getRandomDelay(120000, 180000);
                 console.log(`😴 Sleeping for ${(waitTime / 60000).toFixed(1)} mins...`);
-                await delay(waitTime); 
+                await delay(waitTime);
             }
         }
         console.log('\n🎉 Today\'s batch complete!');
